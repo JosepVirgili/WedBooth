@@ -8,13 +8,15 @@ GPIO.output(7, False) #Not wake the camera yet
 
 
 
-def WakeUp():
+def WakeUpDSLR():
 	#Wakes up the DSLR camera
 	GPIO.output(7, True) #Wake up camera
 	time.sleep(1) #Sleep for 1 second to give the camera time to wake up
 	GPIO.output(7, False) #Stop waking the camera
 	
 #Main script
+WakeUpDSLR()
+time.sleep(5) #Some time is required for the camera to come online
 WakeUp()	
 	
 #Clean up	

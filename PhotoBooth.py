@@ -4,6 +4,8 @@ import time
 #GPIO configuration
 GPIO.setmode(GPIO.BOARD) #Set the Board Mode
 GPIO.setup(7, GPIO.OUT) #Sets up GPIO Pin 7 to Output
+GPIO.output(7, False) #Not wake the camera yet
+
 
 
 def WakeUp():

@@ -43,6 +43,8 @@ def TakePicDSLR(filename):
 	#Takes a picture with the DSLR camera and downloads it to the RPi saving it with the specified filename
 	call('gphoto2 --capture-image-and-download --filename '+filename+' --keep --force-overwrite',shell=True)
 
+
+
 def DisplayImageFile(filename):
 	#Diplays and image from file into the display
 	image=pygame.image.load(filename) #Load image
@@ -51,8 +53,8 @@ def DisplayImageFile(filename):
 	screen.blit (image, (0,0))
 	pygame.display.update()
 
-#Countdown
 def Countdown(count,background):
+	#Performs countdown with preview
 	cd=1 #Initialize countdown variable
 	start_time = pygame.time.get_ticks() #Initialize time
 	#Start countdown

@@ -43,7 +43,7 @@ def TakePicDSLR(filename):
 	#Takes a picture with the DSLR camera and downloads it to the RPi saving it with the specified filename
 	call('gphoto2 --capture-image-and-download --filename '+filename+' --keep --force-overwrite',shell=True)
 
-def DisplayImage(filename):
+def DisplayImageFile(filename):
 	#Diplays and image from file into the display
 	image=pygame.image.load(filename) #Load image
 	image = pygame.transform.scale(image.convert(), screenSize) #Resizes it to fit screen
@@ -75,7 +75,7 @@ WakeUpDSLR()
 Countdown(5,background)
 TakePicDSLR(filename)
 camera.preview_alpha = 0
-DisplayImage(filename)
+DisplayImageFile(filename)
 time.sleep(5) #Time to appreciate the image taken.
 	
 #--- Clean up ---#

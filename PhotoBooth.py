@@ -2,6 +2,8 @@ import RPi.GPIO as GPIO
 import time
 from subprocess import call
 import pygame
+import picamera
+import math
 
 #GPIO configuration
 GPIO.setmode(GPIO.BOARD) #Set the Board Mode
@@ -10,10 +12,25 @@ GPIO.output(7, False) #Not wake the camera yet
 
 #Pygame configuration
 pygame.init()
-screenSize = (pygame.display.Info().current_w, pygame.display.Info().current_h)
 pygame.mouse.set_visible(0)
-pygame.display.set_mode(screenSize, pygame.FULLSCREEN)
-screen = pygame.display.set_mode(screenSize)
+screenSize = (pygame.display.Info().current_w, pygame.display.Info().current_h)
+screen = pygame.display.set_mode(screenSize,pygame.FULLSCREEN)
+
+# Fill background
+background = pygame.Surface(screen.get_size())
+background = background.convert()
+background.fill((0, 0, 0))
+
+#Initialize Camera
+camera = picamera.PiCamera()
+camera.resolution = (1296,730)
+camera.framerate = 30
+camera.start_preview()
+preview_alpha = 200 #Nominal alpha value
+camera.preview_alpha = preview_alpha
+
+#Set countdown text font
+font = pygame.font.SysFont("arial", screenSize[1])
 
 #--- Functions ---#
 def WakeUpDSLR():
@@ -33,17 +50,36 @@ def DisplayImage(filename):
 	#Diplays image in siplay
 	screen.blit (image, (0,0))
 	pygame.display.update()
+
+#Countdown
+def Countdown(count,background):
+	cd=1 #Initialize countdown variable
+	start_time = pygame.time.get_ticks() #Initialize time
+	#Start countdown
+	while cd>0:
+		#Establish countdown
+		cd = int(math.ceil((start_time - pygame.time.get_ticks())/1000 + count+0.5))
+		#Generate countdown text
+		text = font.render(str(cd), True, (255, 255, 255),(0,0,0))
+		textpos = text.get_rect()
+		textpos.centerx = background.get_rect().centerx
+		background.blit(text, textpos)
+		# Blit everything to the screen
+		screen.blit(background, (0, 0))
+		pygame.display.flip()
 	
 	
 #--- Main script ---#
 filename = 'WedBoothPic.jpg' #Filename of the image
 WakeUpDSLR()
-time.sleep(5) #Some time is required for the camera to come online
+Countdown(5,background)
 TakePicDSLR(filename)
+camera.preview_alpha = 0
 DisplayImage(filename)
 time.sleep(5) #Time to appreciate the image taken.
 	
-#--- Clean up ---#	
+#--- Clean up ---#
+camera.close()
 GPIO.cleanup() #Clean up of the GPIO Port
 	
 	

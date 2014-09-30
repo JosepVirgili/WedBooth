@@ -25,7 +25,7 @@ background.fill((0, 0, 0))
 
 #Initialize Camera
 camera = picamera.PiCamera()
-cam_resolution = (1296,730)
+cam_resolution = (1920,1080)
 camera.resolution = cam_resolution
 camera.framerate = 15
 camera.start_preview()
@@ -60,7 +60,7 @@ def TakePicDSLR_Delay(n,filename):
 def TakePicPiCamStream(camera,cam_resolution):
 	#Takes a picture with the Pi camera and returns it
 	stream = io.BytesIO() #Create stream
-	camera.capture(stream, 'rgb') #Capture picture
+	camera.capture(stream, 'rgb', use_video_port=True) #Capture picture
 	rgb = bytearray(cam_resolution[0] * cam_resolution[1] * 3) 	# Buffers for PiCamera picture
 	#Read picture into buffer
 	stream.seek(0)

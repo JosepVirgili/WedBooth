@@ -36,6 +36,11 @@ camera.preview_alpha = preview_alpha
 font = pygame.font.SysFont("arial", screenSize[1])
 
 #--- Functions ---#
+def ConfigureDSLR():
+	#Configures the DSLR Camera
+	WakeUpDSLR(2) #Wakes up the camera
+	call('gphoto2 --set-config imageformat=4',shell=True) #Configure Pic format to Small Fine JPG
+	
 def WakeUpDSLR(n):
 	#Wakes up the DSLR camera
 	GPIO.output(7, True) #Wake up camera
@@ -101,7 +106,7 @@ def PicSequence(filename):
 	t_PicDSLR.start() #Take picture using DSLR
 	img = TakePicPiCamStream(camera,cam_resolution) #Take picture using PiCam
 	DisplayImagePi(img) #Display image from PiCam
-	camera.preview_alpha = 0 #Set transparency of preview to 
+	camera.preview_alpha = 0 #Set transparency of preview to 0
 	t_PicDSLR.join() #Wait until the DSLR picture finishes transfering
 	DisplayImageFile(filename) #Display DSLR image taken
 	time.sleep(5) #Time to appreciate the image taken	
@@ -112,6 +117,7 @@ def PicSequence(filename):
 	
 #--- Main script ---#
 filename = 'WedBoothPic.jpg' #Filename of the image
+ConfigureDSLR() #Configure DSLR
 PicSequence(filename)
 	
 #--- Clean up ---#

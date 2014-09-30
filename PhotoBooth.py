@@ -50,7 +50,7 @@ def WakeUpDSLR(n):
 
 def TakePicDSLR(filename):
 	#Takes a picture with the DSLR camera and downloads it to the RPi saving it with the specified filename
-	call('gphoto2 --capture-image-and-download --filename '+filename+' --force-overwrite',shell=True)
+	call('gphoto2 --capture-image-and-download --keep --filename '+filename+' --force-overwrite',shell=True)
 	
 def TakePicDSLR_Delay(n,filename):
 	#Takes a picture with the DSLR using the TakePicDSLR function after n seconds delay

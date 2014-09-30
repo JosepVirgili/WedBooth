@@ -25,30 +25,26 @@ background.fill((0, 0, 0))
 
 #Initialize Camera
 camera = picamera.PiCamera()
-cam_resolution = (640,480)
+cam_resolution = (1296,730)
 camera.resolution = cam_resolution
 camera.framerate = 15
 camera.start_preview()
 preview_alpha = 200 #Nominal alpha value
 camera.preview_alpha = preview_alpha
 
-#Configure DSLR camera
-WakeUpDSLR()
-call('gphoto2 --set-config imageformat=7')
-
 #Set countdown text font
 font = pygame.font.SysFont("arial", screenSize[1])
 
 #--- Functions ---#
-def WakeUpDSLR():
+def WakeUpDSLR(n):
 	#Wakes up the DSLR camera
 	GPIO.output(7, True) #Wake up camera
-	time.sleep(2) #Sleep for 2 second to give the camera time to wake up
+	time.sleep(n) #Sleep for n second to give the camera time to wake up
 	GPIO.output(7, False) #Stop waking the camera
 
 def TakePicDSLR(filename):
 	#Takes a picture with the DSLR camera and downloads it to the RPi saving it with the specified filename
-	call('gphoto2 --capture-image-and-download --filename '+filename+' --keep --force-overwrite',shell=True)
+	call('gphoto2 --capture-image-and-download --filename '+filename+' --force-overwrite',shell=True)
 
 def TakePicPiCamStream(camera,cam_resolution):
 	#Takes a picture with the Pi camera and returns it
@@ -93,21 +89,30 @@ def Countdown(count,background):
 		# Blit everything to the screen
 		screen.blit(background, (0, 0))
 		pygame.display.flip()
+		
+def PicSequence(filename):
+	#Sequence to take pictures
+	#Generate threats
+	t_PicDSLR = Thread(target=TakePicDSLR,args=(filename,))
+	t_WakeUp = Thread(target=WakeUpDSLR,args=(3,))
+	#Sequence
+	t_WakeUp.start() #Wake up  DSLR camera
+	Countdown(5,background) #Countdown
+	t_PicDSLR.start() #Take picture using DSLR
+	img = TakePicPiCamStream(camera,cam_resolution) #Take picture using PiCam
+	DisplayImagePi(img) #Display image from PiCam
+	camera.preview_alpha = 0 #Set transparency of preview to 
+	t_PicDSLR.join() #Wait until the DSLR picture finishes transfering
+	DisplayImageFile(filename) #Display DSLR image taken
+	time.sleep(5) #Time to appreciate the image taken	
+
+	
+	
 	
 	
 #--- Main script ---#
 filename = 'WedBoothPic.jpg' #Filename of the image
-t_PicDSLR = Thread(target=TakePicDSLR,args=(filename,))
-t_WakeUp = Thread(target=WakeUpDSLR,args=())
-t_WakeUp.start()
-Countdown(5,background)
-t_PicDSLR.start()
-img = TakePicPiCamStream(camera,cam_resolution)
-camera.preview_alpha = 0
-DisplayImagePi(img)
-t_PicDSLR.join()
-DisplayImageFile(filename)
-time.sleep(5) #Time to appreciate the image taken.
+PicSequence(filename)
 	
 #--- Clean up ---#
 camera.close()

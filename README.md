@@ -19,13 +19,17 @@ The required components are:
 ### Set-up
 
 First the RPi needs to be configured. Follow this [guide]().
-When done install all the required dependencies:
+
+
+When done install gphoto2:
 
 ```
-sudo apt-get install gphoto2
+wget https://raw.githubusercontent.com/gonzalo/gphoto2-updater/master/gphoto2-updater.sh
+chmod +x gphoto2-updater.sh
+sudo ./gphoto2-updater.sh
 ```
 
-Then the software needs to be uploaded into the 
+Then the software needs to be uploaded into the Raspberry Pi.
 
 ### Start the photo-booth software
 

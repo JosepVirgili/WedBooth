@@ -38,7 +38,8 @@ font = pygame.font.SysFont("arial", screenSize[1])
 #--- Functions ---#
 def ConfigureDSLR():
 	#Configures the DSLR Camera
-	WakeUpDSLR(2) #Wakes up the camera
+	WakeUpDSLR(1) #Wakes up the camera
+	time.sleep(2) #Allow some time for the camera to mount
 	call('gphoto2 --set-config imageformat=4',shell=True) #Configure Pic format to Small Fine JPG
 	
 def WakeUpDSLR(n):
@@ -50,6 +51,11 @@ def WakeUpDSLR(n):
 def TakePicDSLR(filename):
 	#Takes a picture with the DSLR camera and downloads it to the RPi saving it with the specified filename
 	call('gphoto2 --capture-image-and-download --filename '+filename+' --force-overwrite',shell=True)
+	
+def TakePicDSLR_Delay(n,filename):
+	#Takes a picture with the DSLR using the TakePicDSLR function after n seconds delay
+	time.sleep(n) #Sleep for n seconds
+	TakePicDSLR(filename) #Take picture with DSLR
 
 def TakePicPiCamStream(camera,cam_resolution):
 	#Takes a picture with the Pi camera and returns it
@@ -95,30 +101,28 @@ def Countdown(count,background):
 		screen.blit(background, (0, 0))
 		pygame.display.flip()
 		
-def PicSequence(filename):
-	#Sequence to take pictures
+def PicSequence(count,filename):
+	#Sequence to take pictures with cd being the countdown time in sec (min 3 seconds) and filename the name of the picture file.
 	#Generate threats
-	t_PicDSLR = Thread(target=TakePicDSLR,args=(filename,))
-	t_WakeUp = Thread(target=WakeUpDSLR,args=(3,))
+	t_PicDSLR_Delay = Thread(target=TakePicDSLR_Delay,args=(count-1.5,filename,))
+	t_WakeUp = Thread(target=WakeUpDSLR,args=(count-2,))
 	#Sequence
 	t_WakeUp.start() #Wake up  DSLR camera
-	Countdown(5,background) #Countdown
-	t_PicDSLR.start() #Take picture using DSLR
+	t_PicDSLR_Delay.start() #Take picture using DSLR with a Delay
+	Countdown(count,background) #Countdown
 	img = TakePicPiCamStream(camera,cam_resolution) #Take picture using PiCam
 	DisplayImagePi(img) #Display image from PiCam
 	camera.preview_alpha = 0 #Set transparency of preview to 0
-	t_PicDSLR.join() #Wait until the DSLR picture finishes transfering
+	t_PicDSLR_Delay.join() #Wait until the DSLR picture finishes transfering
 	DisplayImageFile(filename) #Display DSLR image taken
 	time.sleep(5) #Time to appreciate the image taken	
-
-	
-	
 	
 	
 #--- Main script ---#
 filename = 'WedBoothPic.jpg' #Filename of the image
+count = 5 #Countdown time in sec
 ConfigureDSLR() #Configure DSLR
-PicSequence(filename)
+PicSequence(count,filename)
 	
 #--- Clean up ---#
 camera.close()

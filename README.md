@@ -44,6 +44,19 @@ cd WedBooth
 sudo python PhotoBooth.py
 ```
 
+If you want the software to start when booting then:
+
+```
+sudo nano /etc/rc.local
+```
+
+At the end of the file add:
+
+```
+# Auto run our application
+sudo python PhotoBooth.py
+```
+
 ### Legal Boring Stuff
 
 Copyright 2014 Josep Virgili Llop

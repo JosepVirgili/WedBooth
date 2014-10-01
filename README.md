@@ -65,7 +65,7 @@ cd WedBooth
 nano settings.txt
 ```
 
-Add at the beginning of the file the YY:YY:YY:YY:YY:YY mac adress.
+Add at the beginning of the file insert the YY:YY:YY:YY:YY:YY mac adress of your PoGo.
 
 
 ### Start the photo-booth software

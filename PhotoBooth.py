@@ -100,12 +100,20 @@ def DisplayImageFile(filename,t_PicDSLR):
 	pygame.display.update()
 
 def DisplayImagePi(image):
-	#Display image from an image object
+	#Display image from an image object.
 	image = pygame.transform.scale(image.convert(), screenSize) #Resizes it to fit screen
 	#Diplays image in display
-	screen.blit (image, (0,0))
+	screen.blit(image, (0,0))
 	pygame.display.update()
-
+	
+def DisplayText_Centre(text_disp):
+	#Generate countdown text
+	text = font_TXT.render(text_disp, True, (255, 255, 255))
+	textpos = text.get_rect()
+	textpos.centerx = screen.get_rect().centerx
+	textpos.centery = screen.get_rect().centery
+	screen.blit(text, textpos)
+	pygame.display.update()
 
 def Countdown(count,background):
 	#Performs countdown with preview
@@ -169,6 +177,7 @@ def PicSequence(count,filename):
 	img = TakePicPiCamStream(camera,cam_resolution) #Take picture using PiCam
 	DisplayImagePi(img) #Display image from PiCam
 	camera.preview_alpha = 0 #Set transparency of preview to 0
+	DisplayText_Centre('Processing') #Display 'processing' text
 	t_DSLRDisplay.join() #Wait until the DSLR picture is displayed
 	time.sleep(5) #Time to appreciate the image taken
 	

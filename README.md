@@ -29,11 +29,44 @@ chmod +x gphoto2-updater.sh
 sudo ./gphoto2-updater.sh
 ```
 
+Install the bluetooth tools required to operate the PoGo printer:
+
+```
+sudo apt-get install bluez bluez-utils obexftp
+```
+
+Find the mac adress of your printer:
+
+```
+hcitool scan
+```
+
+The mac adress will appear as YY:YY:YY:YY:YY:YY Polaroid ZZ ZZ ZZ where YY:YY:YY:YY:YY:YY is the mac adress.
+Then we need to include the pin code of the pogo into the system:
+
+```
+sudo mkdir /var/lib/bluetooth/YY:YY:YY:YY:YY:YY
+sudo nano /var/lib/bluetooth/YY:YY:YY:YY:YY:YY/pincodes
+```
+
+Include the line `YY:YY:YY:YY:YY:YY 6000` into the file and save.
+
 Then the software needs to be uploaded into the Raspberry Pi:
 
 ```
 git clone https://github.com/JosepVirgili/WedBooth.git
 ```
+
+Then, create a `settings.txt` file to save the PoGo mac adress.
+
+
+```
+cd WedBooth
+nano settings.txt
+```
+
+Add at the beginning of the file the YY:YY:YY:YY:YY:YY mac adress.
+
 
 ### Start the photo-booth software
 
@@ -50,11 +83,11 @@ If you want the software to start when booting then:
 sudo nano /etc/rc.local
 ```
 
-At the end of the file add:
+At the end of the file add (change pi for your own username if you have change it):
 
 ```
-# Auto run our application
-sudo python PhotoBooth.py
+# Auto run WedBooth
+sudo python /home/pi/WedBooth/PhotoBooth.py
 ```
 
 ### Legal Boring Stuff

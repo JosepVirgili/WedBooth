@@ -29,14 +29,19 @@ chmod +x gphoto2-updater.sh
 sudo ./gphoto2-updater.sh
 ```
 
-Then the software needs to be uploaded into the Raspberry Pi.
+Then the software needs to be uploaded into the Raspberry Pi:
+
+```
+git clone https://github.com/JosepVirgili/WedBooth.git
+```
 
 ### Start the photo-booth software
 
 To start the software just:
 
 ```
-python PhotoBooth.py
+cd WedBooth
+sudo python PhotoBooth.py
 ```
 
 ### Legal Boring Stuff

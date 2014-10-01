@@ -27,8 +27,9 @@ from threading import Thread
 
 #GPIO configuration
 GPIO.setmode(GPIO.BOARD) #Set the Board Mode
-GPIO.setup(7, GPIO.OUT) #Sets up GPIO Pin 7 to Output
+GPIO.setup(7, GPIO.OUT) #Set up GPIO Pin 7 to Output to wake up camera
 GPIO.output(7, False) #Not wake the camera yet
+GPIO.setup(19,GPIO.IN) #Set up Pin 19 to input to detect push button
 
 #Pygame configuration
 pygame.init()
@@ -47,11 +48,14 @@ cam_resolution = (1920,1080)
 camera.resolution = cam_resolution
 camera.framerate = 15
 camera.start_preview()
-preview_alpha = 200 #Nominal alpha value
-camera.preview_alpha = preview_alpha
+#Alpha Values
+preview_alpha_CD = 200 #Countdown alpha value
+preview_alpha_TXT = 150 #Text alpha value
 
 #Set countdown text font
-font = pygame.font.SysFont("arial", screenSize[1])
+font_CD = pygame.font.SysFont("arial", screenSize[1])
+font_TXT = pygame.font.SysFont("arial", screenSize[1]/5)
+
 
 #--- Functions ---#
 def ConfigureDSLR():
@@ -106,12 +110,16 @@ def Countdown(count,background):
 	#Performs countdown with preview
 	cd=1 #Initialize countdown variable
 	start_time = pygame.time.get_ticks() #Initialize time
+	#Transparency level
+	camera.preview_alpha = preview_alpha_CD
+	#Remove previous text
+	background.fill((0, 0, 0))
 	#Start countdown
 	while cd>0:
 		#Establish countdown
 		cd = int(math.ceil((start_time - pygame.time.get_ticks())/1000 + count+0.5))
 		#Generate countdown text
-		text = font.render(str(cd), True, (255, 255, 255),(0,0,0))
+		text = font_CD.render(str(cd), True, (255, 255, 255),(0,0,0))
 		textpos = text.get_rect()
 		textpos.centerx = background.get_rect().centerx
 		background.blit(text, textpos)
@@ -133,14 +141,43 @@ def PicSequence(count,filename):
 	camera.preview_alpha = 0 #Set transparency of preview to 0
 	t_PicDSLR_Delay.join() #Wait until the DSLR picture finishes transfering
 	DisplayImageFile(filename) #Display DSLR image taken
-	time.sleep(5) #Time to appreciate the image taken	
+	time.sleep(5) #Time to appreciate the image taken
+	
+def WaitForButton(camera):
+	#Waits until the button is pressed with a text indicating to press button
+	
+	#Transperency
+	camera.preview_alpha = preview_alpha_TXT
+	#Remove previous text
+	background.fill((0, 0, 0))
+	#Generate text
+	text_1 = font_TXT.render("Press the button", True, (255, 255, 255),(0,0,0))
+	textpos_1 = text_1.get_rect()
+	textpos_1.centerx = background.get_rect().centerx
+	textpos_1.centery = background.get_rect().centery
+	text_2 = font_TXT.render("to start!", True, (255, 255, 255),(0,0,0))
+	textpos_2 = text_2.get_rect()
+	textpos_2.centerx = background.get_rect().centerx
+	textpos_2.centery = textpos_1.centery+textpos_2.height
+	background.blit(text_1, textpos_1)
+	background.blit(text_2, textpos_2)
+	# Blit everything to the screen
+	screen.blit(background, (0, 0))
+	pygame.display.flip()
+	
+	#Wait until a button is pressed
+	while True:
+		if (GPIO.input(19) == False): #Button pressed
+			break
 	
 	
 #--- Main script ---#
 filename = 'WedBoothPic.jpg' #Filename of the image
 count = 5 #Countdown time in sec
 ConfigureDSLR() #Configure DSLR
-PicSequence(count,filename)
+while True:
+	WaitForButton(camera)
+	PicSequence(count,filename)
 	
 #--- Clean up ---#
 camera.close()

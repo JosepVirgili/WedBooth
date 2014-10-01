@@ -128,23 +128,6 @@ def Countdown(count,background):
 		screen.blit(background, (0, 0))
 		pygame.display.flip()
 		
-def PicSequence(count,filename):
-	#Sequence to take pictures with cd being the countdown time in sec (min 3 seconds) and filename the name of the picture file.
-	#Generate threats
-	t_PicDSLR_Delay = Thread(target=TakePicDSLR_Delay,args=(count-1.5,filename,))
-	t_DSLRDisplay = Thread(target=DisplayImageFile,args=(filename,t_PicDSLR_Delay,))
-	t_WakeUp = Thread(target=WakeUpDSLR,args=(count-2,))
-	#Sequence
-	t_WakeUp.start() #Wake up  DSLR camera
-	t_PicDSLR_Delay.start() #Take picture using DSLR with a Delay
-	t_DSLRDisplay.start() #Start DLS image display thread.
-	Countdown(count,background) #Countdown
-	img = TakePicPiCamStream(camera,cam_resolution) #Take picture using PiCam
-	DisplayImagePi(img) #Display image from PiCam
-	camera.preview_alpha = 0 #Set transparency of preview to 0
-	t_DSLRDisplay.join() #Wait until the DSLR picture is displayed
-	time.sleep(5) #Time to appreciate the image taken
-	
 def WaitForButton(camera):
 	#Waits until the button is pressed with a text indicating to press button
 	
@@ -171,7 +154,23 @@ def WaitForButton(camera):
 	while True:
 		if (GPIO.input(19) == False): #Button pressed
 			break
-	
+		
+def PicSequence(count,filename):
+	#Sequence to take pictures with cd being the countdown time in sec (min 3 seconds) and filename the name of the picture file.
+	#Generate threats
+	t_PicDSLR_Delay = Thread(target=TakePicDSLR_Delay,args=(count-1.5,filename,))
+	t_DSLRDisplay = Thread(target=DisplayImageFile,args=(filename,t_PicDSLR_Delay,))
+	t_WakeUp = Thread(target=WakeUpDSLR,args=(count-2,))
+	#Sequence
+	t_WakeUp.start() #Wake up  DSLR camera
+	t_PicDSLR_Delay.start() #Take picture using DSLR with a Delay
+	t_DSLRDisplay.start() #Start DLS image display thread.
+	Countdown(count,background) #Countdown
+	img = TakePicPiCamStream(camera,cam_resolution) #Take picture using PiCam
+	DisplayImagePi(img) #Display image from PiCam
+	camera.preview_alpha = 0 #Set transparency of preview to 0
+	t_DSLRDisplay.join() #Wait until the DSLR picture is displayed
+	time.sleep(5) #Time to appreciate the image taken
 	
 #--- Main script ---#
 filename = 'WedBoothPic.jpg' #Filename of the image

@@ -90,9 +90,8 @@ def TakePicPiCamStream(camera,cam_resolution):
 	#Return the image
 	return pygame.image.frombuffer(rgb[0:cam_resolution[0]*cam_resolution[1]*3],cam_resolution, 'RGB')
 
-def DisplayImageFile(filename,t_PicDSLR):
-	#Diplays and image from file into the display when it has finished
-	t_PicDSLR.join() #Wait for thread to finish
+def DisplayImageFile(filename):
+	#Diplays and image from file into the display when it has transferred.
 	image=pygame.image.load(filename) #Load image
 	image = pygame.transform.scale(image.convert(), screenSize) #Resizes it to fit screen
 	#Diplays image in display
@@ -162,24 +161,41 @@ def WaitForButton(camera):
 	while True:
 		if (GPIO.input(19) == False): #Button pressed
 			break
+
+def PostDSLR(filename,t_PicDSLR):
+	#Kickstarts the tasks that need to be done when the picture has been taken
+	#Sending image to printing thread
+	#t_PrintDSLR = Thread(target
+	#Wait until the piture has finished
+	t_PicDSLR.join()
+	#Start sending image to printer
+	#Display DSLR image
+	DisplayImageFile(filename)
+	time.sleep(5) #Allow time for unobstructed viewing
+	#Display printing message
+	DisplayText_Centre('Printing')
+	#Wait until image finishes sending
+	time.sleep(5) 
+	#Wait an estimate of the printing process
+	time.sleep(10)
+	
 		
 def PicSequence(count,filename):
 	#Sequence to take pictures with cd being the countdown time in sec (min 3 seconds) and filename the name of the picture file.
 	#Generate threats
 	t_PicDSLR_Delay = Thread(target=TakePicDSLR_Delay,args=(count-1.5,filename,))
-	t_DSLRDisplay = Thread(target=DisplayImageFile,args=(filename,t_PicDSLR_Delay,))
+	t_PostDSLR = Thread(target=PostDSLR,args=(filename,t_PicDSLR_Delay,))
 	t_WakeUp = Thread(target=WakeUpDSLR,args=(count-2,))
 	#Sequence
 	t_WakeUp.start() #Wake up  DSLR camera
-	t_PicDSLR_Delay.start() #Take picture using DSLR with a Delay
-	t_DSLRDisplay.start() #Start DLS image display thread.
+	t_PicDSLR_Delay.start() #Take picture using DSLR with a delay
+	t_PostDSLR.start() #Start post DSLR image capture tasks thread
 	Countdown(count,background) #Countdown
 	img = TakePicPiCamStream(camera,cam_resolution) #Take picture using PiCam
 	DisplayImagePi(img) #Display image from PiCam
 	camera.preview_alpha = 0 #Set transparency of preview to 0
 	DisplayText_Centre('Processing') #Display 'processing' text
-	t_DSLRDisplay.join() #Wait until the DSLR picture is displayed
-	time.sleep(5) #Time to appreciate the image taken
+	t_PostDSLR.join() #Wait until all the post DSLR image capture tasks have finsihed
 	
 #--- Main script ---#
 filename = 'WedBoothPic.jpg' #Filename of the image

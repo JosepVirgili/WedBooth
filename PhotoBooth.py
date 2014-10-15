@@ -62,7 +62,8 @@ def ConfigureDSLR():
 	#Configures the DSLR Camera
 	WakeUpDSLR(1) #Wakes up the camera
 	time.sleep(2) #Allow some time for the camera to mount
-	call('gphoto2 --set-config imageformat=4',shell=True) #Configure Pic format to Small Fine JPG
+	call('gphoto2 --set-config imageformat=4',shell=True) #Configure Pic format to Medium Fine JPG
+	call('gphoto2 --set-config capturetarget=1',shell=True) #Configure camera to save to SD
 	
 def ReadMAC():
 	#Reads from file MAC address of the PoGo printer
@@ -168,9 +169,11 @@ def WaitForButton(camera):
 			break
 
 def PrintDSLR(filename):
-	#Sends file to printer to start printing
-	print 'obexftp --nopath --noconn --uuid none --bluetooth '+mac+' --channel 1 -p '+filename
-	call('obexftp --nopath --noconn --uuid none --bluetooth '+mac+' --channel 1 -p '+filename,shell=True)
+	#Sends file to printer to start printing (prior is scaled down for faster transmission)
+	image=pygame.image.load(filename) #Load image
+	image = pygame.transform.scale(image.convert(),(720,480) ) #Resizes for faster transmission
+	pygame.image.save(image,'Thumb_'+filename)
+	call('obexftp --nopath --noconn --uuid none --bluetooth '+mac+' --channel 1 -p Thumb_'+filename,shell=True)
 
 def PostDSLR(filename,t_PicDSLR):
 	#Kickstarts the tasks that need to be done when the picture has been taken
@@ -188,9 +191,9 @@ def PostDSLR(filename,t_PicDSLR):
 	#Wait until image finishes sending
 	t_PrintDSLR.join()
 	#Display printing message
-	DisplayText_Centre('Sending to Printer')
+	DisplayText_Centre('Printing')
 	#Wait an estimate of the printing process
-	time.sleep(60)
+	time.sleep(50)
 	
 		
 def PicSequence(count,filename):

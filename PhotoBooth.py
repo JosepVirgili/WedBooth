@@ -64,6 +64,11 @@ def ConfigureDSLR():
 	time.sleep(2) #Allow some time for the camera to mount
 	call('gphoto2 --set-config imageformat=4',shell=True) #Configure Pic format to Small Fine JPG
 	
+def ReadMAC():
+	#Reads from file MAC address of the PoGo printer
+	file = open('settings.txt', 'r') #Open file in read mode
+	return file.read().replace('\n','') #Return MAC adress
+	
 def WakeUpDSLR(n):
 	#Wakes up the DSLR camera
 	GPIO.output(7, True) #Wake up camera
@@ -162,22 +167,30 @@ def WaitForButton(camera):
 		if (GPIO.input(19) == False): #Button pressed
 			break
 
+def PrintDSLR(filename):
+	#Sends file to printer to start printing
+	print 'obexftp --nopath --noconn --uuid none --bluetooth '+mac+' --channel 1 -p '+filename
+	call('obexftp --nopath --noconn --uuid none --bluetooth '+mac+' --channel 1 -p '+filename,shell=True)
+
 def PostDSLR(filename,t_PicDSLR):
 	#Kickstarts the tasks that need to be done when the picture has been taken
 	#Sending image to printing thread
-	#t_PrintDSLR = Thread(target
+	t_PrintDSLR = Thread(target=PrintDSLR,args=(filename,))
 	#Wait until the piture has finished
 	t_PicDSLR.join()
 	#Start sending image to printer
+	t_PrintDSLR.start()
 	#Display DSLR image
 	DisplayImageFile(filename)
 	time.sleep(5) #Allow time for unobstructed viewing
-	#Display printing message
-	DisplayText_Centre('Printing')
+	#Display ending to printer message
+	DisplayText_Centre('Sending to Printer')
 	#Wait until image finishes sending
-	time.sleep(5) 
+	t_PrintDSLR.join()
+	#Display printing message
+	DisplayText_Centre('Sending to Printer')
 	#Wait an estimate of the printing process
-	time.sleep(10)
+	time.sleep(60)
 	
 		
 def PicSequence(count,filename):
@@ -201,6 +214,7 @@ def PicSequence(count,filename):
 filename = 'WedBoothPic.jpg' #Filename of the image
 count = 5 #Countdown time in sec
 ConfigureDSLR() #Configure DSLR
+mac = ReadMAC() #Read PoGo MAC address
 while True:
 	WaitForButton(camera)
 	PicSequence(count,filename)

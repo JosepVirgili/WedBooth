@@ -64,6 +64,7 @@ def ConfigureDSLR():
 	time.sleep(2) #Allow some time for the camera to mount
 	call('gphoto2 --set-config imageformat=4',shell=True) #Configure Pic format to Medium Fine JPG
 	call('gphoto2 --set-config capturetarget=1',shell=True) #Configure camera to save to SD
+	call('gphoto2 --set-config colortemperature=5500',shell=True) #Configure color temperature
 	
 def ReadMAC():
 	#Reads from file MAC address of the PoGo printer
@@ -103,6 +104,7 @@ def DisplayImageFile(filename):
 	#Diplays image in display
 	screen.blit (image, (0,0))
 	pygame.display.update()
+	return image
 
 def DisplayImagePi(image):
 	#Display image from an image object.
@@ -110,13 +112,18 @@ def DisplayImagePi(image):
 	#Diplays image in display
 	screen.blit(image, (0,0))
 	pygame.display.update()
+	return image
 	
-def DisplayText_Centre(text_disp):
-	#Generate countdown text
+def DisplayText_Centre(text_disp,image):
+	#Generate text
 	text = font_TXT.render(text_disp, True, (255, 255, 255))
 	textpos = text.get_rect()
 	textpos.centerx = screen.get_rect().centerx
 	textpos.centery = screen.get_rect().centery
+	#Diplays image in display
+	screen.blit(image, (0,0))
+	pygame.display.update()
+	#Displays text on top
 	screen.blit(text, textpos)
 	pygame.display.update()
 
@@ -149,7 +156,7 @@ def WaitForButton(camera):
 	#Remove previous text
 	background.fill((0, 0, 0))
 	#Generate text
-	text_1 = font_TXT.render("Press the button", True, (255, 255, 255),(0,0,0))
+	text_1 = font_TXT.render("Push the button", True, (255, 255, 255),(0,0,0))
 	textpos_1 = text_1.get_rect()
 	textpos_1.centerx = background.get_rect().centerx
 	textpos_1.centery = background.get_rect().centery
@@ -168,39 +175,54 @@ def WaitForButton(camera):
 		if (GPIO.input(19) == False): #Button pressed
 			break
 
-def PrintDSLR(filename):
-	#Sends file to printer to start printing (prior is scaled down for faster transmission)
+def PrintDSLR(prefix,filename):
+	#Sends file to printer to start printing
+	call('obexftp --nopath --noconn --uuid none --bluetooth '+mac+' --channel 1 -p '+prefix+filename,shell=True)
+	
+def ResizePrint(prefix,filename):
+	#Resize picture for printing
 	image=pygame.image.load(filename) #Load image
 	image = pygame.transform.scale(image.convert(),(720,480) ) #Resizes for faster transmission
-	pygame.image.save(image,'Thumb_'+filename)
-	call('obexftp --nopath --noconn --uuid none --bluetooth '+mac+' --channel 1 -p Thumb_'+filename,shell=True)
-
-def PostDSLR(filename,t_PicDSLR):
+	pygame.image.save(image,prefix+filename)
+	
+def PrintButton(prefix,filename,image):
+	#Printing process
+	DisplayText_Centre('Push again to print',image)
+	#Wait until a button is pressed
+	start_time = pygame.time.get_ticks() #Initialize time
+	while (pygame.time.get_ticks()-start_time)<7500:
+		if (GPIO.input(19) == False): #Button pressed
+			#Display ending to printer message
+			DisplayText_Centre('Sending to Printer',image)
+			#Send to Printer
+			PrintDSLR(prefix,filename)
+			#Display printing message
+			DisplayText_Centre('Printing',image)
+			#Wait an estimate of the printing process
+			time.sleep(45)
+			return
+				
+def PostDSLR(prefix,filename,t_PicDSLR):
 	#Kickstarts the tasks that need to be done when the picture has been taken
-	#Sending image to printing thread
-	t_PrintDSLR = Thread(target=PrintDSLR,args=(filename,))
 	#Wait until the piture has finished
 	t_PicDSLR.join()
-	#Start sending image to printer
-	t_PrintDSLR.start()
+	#Resize image for potential printing
+	t_Resize = Thread(target=ResizePrint,args=(prefix,filename,))
+	t_Resize.start()
 	#Display DSLR image
-	DisplayImageFile(filename)
+	image = DisplayImageFile(filename)
 	time.sleep(5) #Allow time for unobstructed viewing
-	#Display ending to printer message
-	DisplayText_Centre('Sending to Printer')
-	#Wait until image finishes sending
-	t_PrintDSLR.join()
-	#Display printing message
-	DisplayText_Centre('Printing')
-	#Wait an estimate of the printing process
-	time.sleep(50)
+	#Finish print resize
+	t_Resize.join()
+	#Button to print
+	PrintButton(prefix,filename,image)
 	
 		
-def PicSequence(count,filename):
+def PicSequence(count,prefix,filename):
 	#Sequence to take pictures with cd being the countdown time in sec (min 3 seconds) and filename the name of the picture file.
 	#Generate threats
 	t_PicDSLR_Delay = Thread(target=TakePicDSLR_Delay,args=(count-1.5,filename,))
-	t_PostDSLR = Thread(target=PostDSLR,args=(filename,t_PicDSLR_Delay,))
+	t_PostDSLR = Thread(target=PostDSLR,args=(prefix,filename,t_PicDSLR_Delay,))
 	t_WakeUp = Thread(target=WakeUpDSLR,args=(count-2,))
 	#Sequence
 	t_WakeUp.start() #Wake up  DSLR camera
@@ -208,19 +230,20 @@ def PicSequence(count,filename):
 	t_PostDSLR.start() #Start post DSLR image capture tasks thread
 	Countdown(count,background) #Countdown
 	img = TakePicPiCamStream(camera,cam_resolution) #Take picture using PiCam
-	DisplayImagePi(img) #Display image from PiCam
+	img = DisplayImagePi(img) #Display image from PiCam
 	camera.preview_alpha = 0 #Set transparency of preview to 0
-	DisplayText_Centre('Processing') #Display 'processing' text
+	DisplayText_Centre('Processing',img) #Display 'processing' text
 	t_PostDSLR.join() #Wait until all the post DSLR image capture tasks have finsihed
 	
 #--- Main script ---#
 filename = 'WedBoothPic.jpg' #Filename of the image
+prefix = 'Thumb_' #Print file prefix
 count = 5 #Countdown time in sec
 ConfigureDSLR() #Configure DSLR
 mac = ReadMAC() #Read PoGo MAC address
 while True:
 	WaitForButton(camera)
-	PicSequence(count,filename)
+	PicSequence(count,prefix,filename)
 	
 #--- Clean up ---#
 camera.close()

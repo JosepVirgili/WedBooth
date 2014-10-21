@@ -87,6 +87,7 @@ At the end of the file add (change pi for your own username if you have change i
 
 ```
 # Auto run WedBooth
+cd /home/pi/WedBooth
 sudo python /home/pi/WedBooth/PhotoBooth.py
 ```
 

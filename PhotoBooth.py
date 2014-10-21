@@ -48,6 +48,7 @@ cam_resolution = (1920,1080)
 camera.resolution = cam_resolution
 camera.framerate = 15
 camera.start_preview()
+camera.hflip=True
 #Alpha Values
 preview_alpha_CD = 200 #Countdown alpha value
 preview_alpha_TXT = 150 #Text alpha value
@@ -101,6 +102,7 @@ def DisplayImageFile(filename):
 	#Diplays and image from file into the display when it has transferred.
 	image=pygame.image.load(filename) #Load image
 	image = pygame.transform.scale(image.convert(), screenSize) #Resizes it to fit screen
+	image = pygame.transform.flip(image.convert(),True,False) #Flip image horizontally
 	#Diplays image in display
 	screen.blit (image, (0,0))
 	pygame.display.update()
@@ -200,7 +202,7 @@ def PrintButton(prefix,filename,image):
 			DisplayText_Centre('Printing',image)
 			#Wait an estimate of the printing process
 			time.sleep(45)
-			return
+			#PrintButton(prefix,filename,image)
 				
 def PostDSLR(prefix,filename,t_PicDSLR):
 	#Kickstarts the tasks that need to be done when the picture has been taken
